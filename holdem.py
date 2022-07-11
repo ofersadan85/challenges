@@ -1,73 +1,87 @@
 import random
 from itertools import product
 from collections import Counter
+from functools import cached_property
 
 values = "AKQJT98765432"
 ranks = [
-    "High Card",
-    "One Pair",
-    "Two Pair",
-    "Three of a Kind",
-    "Straight",
-    "Flush",
-    "Full House",
-    "Four of a Kind",
     "Straight Flush",
+    "Four of a Kind",
+    "Full House",
+    "Flush",
+    "Straight",
+    "Three of a Kind",
+    "Two Pair",
+    "One Pair",
+    "High Card",
 ]
 
 
 class PokerHand:
-
-    RESULT = ["Loss", "Tie", "Win"]
-
     def __init__(self, hand):
         self.cards = hand.split()
         self.count = Counter(card[0] for card in self.cards)
 
-    @property
+    @cached_property
     def order(self):
         card_values = [card[0] for card in self.cards]
         card_values.sort(key=lambda x: (self.count[x] * -1, values.index(x)))
-        return "".join(card_values)
+        result = "".join(card_values)
+        return "5432A" if result == "A5432" else result
 
-    @property
+    @cached_property
     def hand_type(self):
-        is_straight = self.order in values or self.order == "A5432"
+        is_straight = self.order in values or self.order == "5432A"
         is_flush = len(set(card[1] for card in self.cards)) == 1
 
         if is_straight and is_flush:
-            return "Straight Flush"
+            return 0
         elif 4 in self.count.values():
-            return "Four of a Kind"
+            return 1
         elif 3 in self.count.values() and 2 in self.count.values():
-            return "Full House"
+            return 2
         elif is_flush:
-            return "Flush"
+            return 3
         elif is_straight:
-            return "Straight"
+            return 4
         elif 3 in self.count.values():
-            return "Three of a Kind"
+            return 5
         elif list(self.count.values()).count(2) == 2:
-            return "Two Pair"
+            return 6
         elif 2 in self.count.values():
-            return "One Pair"
+            return 7
         else:
-            return "High Card"
+            return 8
 
-    def compare_with(self, other):
-        result = ranks.index(self.hand_type) - ranks.index(other.hand_type)
-        if result > 0:
-            return "Win"
-        elif result < 0:
-            return "Loss"
+    def __eq__(self, other):
+        return self.order == other.order
+
+    def __gt__(self, other):
+        if self == other:
+            return False
+        result = self.hand_type - other.hand_type
+        if result < 0:
+            return True
+        elif result > 0:
+            return False
         else:
             for i in range(5):
                 result = values.index(self.order[i]) - values.index(other.order[i])
                 if result < 0:
-                    return "Win"
+                    return True
                 elif result > 0:
-                    return "Loss"
+                    return False
+
+    def __str__(self):
+        return f"<PokerHand {ranks[self.hand_type]} {self.cards}>"
+
+    def compare_with(self, other):
+        if self == other:
             return "Tie"
+        elif self > other:
+            return "Win"
+        else:
+            return "Loss"
 
 
 if __name__ == "__main__":
@@ -75,6 +89,26 @@ if __name__ == "__main__":
     random.shuffle(deck)
     hand1 = PokerHand(" ".join(deck[:5]))
     hand2 = PokerHand(" ".join(deck[5:10]))
-    print(hand1.cards, hand1.count, hand1.hand_type, hand1.order)
-    print(hand2.cards, hand2.count, hand2.hand_type, hand2.order)
+    print(hand1)
+    print(hand2)
     print(hand1.compare_with(hand2))
+
+    examples = [
+        "KS AS TS QS JS",
+        "2H 3H 4H 5H 6H",
+        "AS AD AC AH JD",
+        "JS JD JC JH 3D",
+        "2S AH 2H AS AC",
+        "AS 3S 4S 8S 2S",
+        "2H 3H 5H 6H 7H",
+        "2S 3H 4H 5S 6C",
+        "2D AC 3H 4H 5S",
+        "AH AC 5H 6H AS",
+        "2S 2H 4H 5S 4C",
+        "AH AC 5H 6H 7S",
+        "AH AC 4H 6H 7S",
+        "2S AH 4H 5S KC",
+        "2S 3H 6H 7S 9C",
+    ]
+    for h in examples:
+        print(PokerHand(h))
