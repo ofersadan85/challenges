@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def cell_options(sudoku, x, y):
+def cell_options(sudoku: np.ndarray, x: int, y: int) -> set:
     options = set(range(1, 10))
     options -= set(sudoku[x, :])
     options -= set(sudoku[:, y])
@@ -11,12 +11,11 @@ def cell_options(sudoku, x, y):
     return options
 
 
-def brute_force(sudoku):
+def brute_force(sudoku: np.ndarray) -> np.ndarray:
     change = True
     while change:
         change = False
-        zeros = np.where(sudoku == 0)
-        for x, y in zip(*zeros):
+        for x, y in zip(*np.where(sudoku == 0)):
             result = cell_options(sudoku, x, y)
             if len(result) == 1:
                 sudoku[x, y] = result.pop()
@@ -27,7 +26,7 @@ def brute_force(sudoku):
 if __name__ == "__main__":
     puzzle = [
         [5, 3, 0, 0, 7, 0, 0, 0, 0],
-        [6, 0, 0, 1, 9, 5, 0, 0, 0],
+        [6, 0, 0, 1, 0, 5, 0, 0, 0],
         [0, 9, 8, 0, 0, 0, 0, 6, 0],
         [8, 0, 0, 0, 6, 0, 0, 0, 3],
         [4, 0, 0, 8, 0, 3, 0, 0, 1],
@@ -36,6 +35,8 @@ if __name__ == "__main__":
         [0, 0, 0, 4, 1, 9, 0, 0, 5],
         [0, 0, 0, 0, 8, 0, 0, 7, 9],
     ]
+    print(np.count_nonzero(puzzle))
     puzzle = np.array(puzzle, dtype=int)
     puzzle = brute_force(puzzle)
     print(puzzle)
+    print(np.count_nonzero(puzzle))
